@@ -1,0 +1,9 @@
+{
+    "IsEncrypted": false,
+  "Values": {
+    "AzureWebJobsStorage": "UseDevelopmentStorage=true",
+    "FUNCTIONS_WORKER_RUNTIME": "dotnet",
+    "THUMBNAIL_CONTAINER_NAME": "thumbnails",
+    "THUMBNAIL_WIDTH": "100"
+  }
+}
