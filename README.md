@@ -1,0 +1,2 @@
+# HRBirdsAzureFunction
+azure function
