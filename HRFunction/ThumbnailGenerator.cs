@@ -13,8 +13,11 @@ using SixLabors.ImageSharp.Formats.Png;
 using SixLabors.ImageSharp.PixelFormats;
 using SixLabors.ImageSharp.Processing;
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Net.Http;
+using System.Text;
+using System.Text.Json;
 using System.Text.RegularExpressions;
 
 namespace HRFunction
@@ -28,6 +31,8 @@ namespace HRFunction
         private static readonly string ENV_ROOT_THUMBNAIL_STORAGE_URL = "ROOT_THUMBNAIL_STORAGE_URL";//"https://hrbirdsblobstorage.blob.core.windows.net/thumbnails/";
         private static readonly string ENV_STORAGE_KEY = "STORAGE_KEY";
         private static readonly string THUMBNAIL_EXTENSION = ".jpeg";
+        private static readonly string ENV_UPDATE_THUMBNAIL_ENDPOINT = "UPDATE_THUMBNAIL_ENDPOINT";
+        // "https://localhost:44308/api/HRPictureStorage/update-thumbnail"
         /// <summary>
         /// 1- Process event only from FullImage
         /// 2- Load data from url 
@@ -35,7 +40,8 @@ namespace HRFunction
         /// 4- Create BlobClient and upload it into Azure
         ///     4.1-Create StorageSharedKeyCredentials object by reading the values from the configuration (appsettings.json)
         ///     4.2- Create the blob client
-        ///     4.3- Upmoad the file in Azure
+        ///     4.3- Upload the file in Azure
+        /// 5- Call backend update thumbnail (waiting output function to plug in another one that do that more signalR?)
         /// </summary>
         /// <param name="eventGridEvent"></param>
         /// <param name="log"></param>
@@ -80,10 +86,32 @@ namespace HRFunction
                         // 4.3-
                         var azureResponse = blobClient.Upload(output);
                         log.LogInformation("Result id version of blob: " + azureResponse.Value?.VersionId);
+                        //5-
+                        NotifyBackEnd(blobPath, createdEvent.Url);
                     }
                 }
             }
         }
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="blobPath"></param>
+        private static void NotifyBackEnd(string thumbnailValue, string fullimageValue)
+        {
+            using (var client = new HttpClient())
+            {
+                var data = new
+                {
+                    fullImageURL = fullimageValue,
+                    thumbnailImageURL = thumbnailValue
+                };
+                var company = JsonSerializer.Serialize(data);
+                var requestContent = new StringContent(company, Encoding.UTF8, "application/json");
+                var response = client.PutAsync(Environment.GetEnvironmentVariable(ENV_UPDATE_THUMBNAIL_ENDPOINT), requestContent);
+                response.Wait();
+            }
+        }
+
         /// <summary>
         /// 
         /// </summary>
