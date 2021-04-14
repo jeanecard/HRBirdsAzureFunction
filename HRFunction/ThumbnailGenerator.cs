@@ -71,7 +71,7 @@ namespace HRFunction
                         UploadImageInMemoryStream(imageData, output, encoder);
                         String blobPath = 
                             Environment.GetEnvironmentVariable(ENV_ROOT_THUMBNAIL_STORAGE_URL) 
-                            + Guid.NewGuid().ToString() 
+                            + Path.GetFileNameWithoutExtension(createdEvent.Url)
                             + THUMBNAIL_EXTENSION;
                         //4-
                         Uri blobUri = new Uri(blobPath);
@@ -87,28 +87,51 @@ namespace HRFunction
                         var azureResponse = blobClient.Upload(output);
                         log.LogInformation("Result id version of blob: " + azureResponse.Value?.VersionId);
                         //5-
-                        NotifyBackEnd(blobPath, createdEvent.Url);
+                        NotifyBackEnd(blobPath, createdEvent.Url, log);
                     }
                 }
             }
         }
         /// <summary>
-        /// 
+        /// 1- Extract id from fullimageURl (i know to many "adherence")
+        /// 2- Notify
         /// </summary>
         /// <param name="blobPath"></param>
-        private static void NotifyBackEnd(string thumbnailValue, string fullimageValue)
+        private static void NotifyBackEnd(string thumbnailValue, string fullimageValue, ILogger log)
         {
             using (var client = new HttpClient())
             {
-                var data = new
+                try
                 {
-                    fullImageURL = fullimageValue,
-                    thumbnailImageURL = thumbnailValue
-                };
-                var company = JsonSerializer.Serialize(data);
-                var requestContent = new StringContent(company, Encoding.UTF8, "application/json");
-                var response = client.PutAsync(Environment.GetEnvironmentVariable(ENV_UPDATE_THUMBNAIL_ENDPOINT), requestContent);
-                response.Wait();
+                    var data = new
+                    {
+                        Id = Path.GetFileNameWithoutExtension(fullimageValue),
+                        ThumbnailImageURL = thumbnailValue
+                    };
+                    var company = JsonSerializer.Serialize(data);
+
+                    var requestContent = new StringContent(company, Encoding.UTF8, "application/json");
+                    log.LogInformation("Contenu : " + company);
+
+                    string endPoint = Environment.GetEnvironmentVariable(ENV_UPDATE_THUMBNAIL_ENDPOINT);
+                    log.LogInformation("Endpoint : " + endPoint);
+
+                    var response = client.PutAsync(Environment.GetEnvironmentVariable(ENV_UPDATE_THUMBNAIL_ENDPOINT), requestContent);
+                    response.Wait();
+                    if(response.IsCompletedSuccessfully)
+                    {
+                        log.LogInformation("tout va bien : " + response.Result.StatusCode.ToString());
+                    }
+                    else
+                    {
+                        log.LogInformation("Ca a chié: " + response.Result.StatusCode.ToString());
+                    }
+                }
+                catch (Exception ex)
+                {
+                    log.LogInformation("RASTOS3");
+                    log.LogInformation(ex.Message);
+                }
             }
         }
 
