@@ -48,92 +48,53 @@ namespace HRFunction
         [FunctionName("createThumbnail")]
         public static void Run([EventGridTrigger] EventGridEvent eventGridEvent, ILogger log)
         {
-            var createdEvent = ((JObject)eventGridEvent.Data).ToObject<StorageBlobCreatedEventData>();
-            //1- 
-            if (!IsEventProcessable(createdEvent))
-            {
-                return;
-            }
-            //2- 
-            byte[] imageData = GetImageDataFromEvent(createdEvent, log);
-            if (imageData != null)
-            {
-                var extension = Path.GetExtension(createdEvent.Url);
-                var encoder = GetEncoder(extension);
+            log.LogInformation("Fonction débranchée");
 
-                if (encoder != null)
-                {
-                    var blobName = GetBlobNameFromUrl(createdEvent.Url);
+            //var createdEvent = ((JObject)eventGridEvent.Data).ToObject<StorageBlobCreatedEventData>();
+            ////1- 
+            //if (!IsEventProcessable(createdEvent))
+            //{
+            //    return;
+            //}
+            ////2- 
+            //byte[] imageData = GetImageDataFromEvent(createdEvent, log);
+            //if (imageData != null)
+            //{
+            //    var extension = Path.GetExtension(createdEvent.Url);
+            //    var encoder = GetEncoder(extension);
 
-                    using (var output = new MemoryStream())
-                    {
-                        //3-
-                        UploadImageInMemoryStream(imageData, output, encoder);
-                        String blobPath = 
-                            Environment.GetEnvironmentVariable(ENV_ROOT_THUMBNAIL_STORAGE_URL) 
-                            + Path.GetFileNameWithoutExtension(createdEvent.Url)
-                            + THUMBNAIL_EXTENSION;
-                        //4-
-                        Uri blobUri = new Uri(blobPath);
-                        //4.1-
-                        StorageSharedKeyCredential storageCredentials =
-                            new StorageSharedKeyCredential(
-                                Environment.GetEnvironmentVariable(ENV_STORAGE_NAME),
-                                Environment.GetEnvironmentVariable(ENV_STORAGE_KEY));
-                        //4.2-
-                        BlobClient blobClient = new BlobClient(blobUri, storageCredentials);
-                        output.Position = 0;
-                        // 4.3-
-                        var azureResponse = blobClient.Upload(output);
-                        log.LogInformation("Result id version of blob: " + azureResponse.Value?.VersionId);
-                        //5-
-                        NotifyBackEnd(blobPath, createdEvent.Url, log);
-                    }
-                }
-            }
+            //    if (encoder != null)
+            //    {
+            //        var blobName = GetBlobNameFromUrl(createdEvent.Url);
+
+            //        using (var output = new MemoryStream())
+            //        {
+            //            //3-
+            //            UploadImageInMemoryStream(imageData, output, encoder);
+            //            String blobPath = 
+            //                Environment.GetEnvironmentVariable(ENV_ROOT_THUMBNAIL_STORAGE_URL) 
+            //                + Path.GetFileNameWithoutExtension(createdEvent.Url)
+            //                + THUMBNAIL_EXTENSION;
+            //            //4-
+            //            Uri blobUri = new Uri(blobPath);
+            //            //4.1-
+            //            StorageSharedKeyCredential storageCredentials =
+            //                new StorageSharedKeyCredential(
+            //                    Environment.GetEnvironmentVariable(ENV_STORAGE_NAME),
+            //                    Environment.GetEnvironmentVariable(ENV_STORAGE_KEY));
+            //            //4.2-
+            //            BlobClient blobClient = new BlobClient(blobUri, storageCredentials);
+            //            output.Position = 0;
+            //            // 4.3-
+            //            var azureResponse = blobClient.Upload(output);
+            //            log.LogInformation("Result id version of blob: " + azureResponse.Value?.VersionId);
+            //            //5-
+            //            HRUtils.NotifyBackEnd(blobPath, createdEvent.Url, log, ENV_UPDATE_THUMBNAIL_ENDPOINT);
+            //        }
+            //    }
+            //}
         }
-        /// <summary>
-        /// 1- Extract id from fullimageURl (i know to many "adherence")
-        /// 2- Notify
-        /// </summary>
-        /// <param name="blobPath"></param>
-        private static void NotifyBackEnd(string thumbnailValue, string fullimageValue, ILogger log)
-        {
-            using (var client = new HttpClient())
-            {
-                try
-                {
-                    var data = new
-                    {
-                        Id = Path.GetFileNameWithoutExtension(fullimageValue),
-                        ThumbnailImageURL = thumbnailValue
-                    };
-                    var company = JsonSerializer.Serialize(data);
-
-                    var requestContent = new StringContent(company, Encoding.UTF8, "application/json");
-                    log.LogInformation("Contenu : " + company);
-
-                    string endPoint = Environment.GetEnvironmentVariable(ENV_UPDATE_THUMBNAIL_ENDPOINT);
-                    log.LogInformation("Endpoint : " + endPoint);
-
-                    var response = client.PutAsync(Environment.GetEnvironmentVariable(ENV_UPDATE_THUMBNAIL_ENDPOINT), requestContent);
-                    response.Wait();
-                    if(response.IsCompletedSuccessfully)
-                    {
-                        log.LogInformation("tout va bien : " + response.Result.StatusCode.ToString());
-                    }
-                    else
-                    {
-                        log.LogInformation("Ca a chié: " + response.Result.StatusCode.ToString());
-                    }
-                }
-                catch (Exception ex)
-                {
-                    log.LogInformation("RASTOS3");
-                    log.LogInformation(ex.Message);
-                }
-            }
-        }
+       
 
         /// <summary>
         /// 
