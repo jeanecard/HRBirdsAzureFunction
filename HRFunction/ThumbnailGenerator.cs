@@ -150,42 +150,7 @@ namespace HRFunction
             var blobClient = new BlobClient(uri);
             return blobClient.Name;
         }
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="extension"></param>
-        /// <returns></returns>
-        private static IImageEncoder GetEncoder(string extension)
-        {
-            IImageEncoder encoder = null;
-
-            extension = extension.Replace(".", "");
-
-            var isSupported = Regex.IsMatch(extension, "gif|png|jpe?g", RegexOptions.IgnoreCase);
-
-            if (isSupported)
-            {
-                switch (extension.ToLower())
-                {
-                    case "png":
-                        encoder = new PngEncoder();
-                        break;
-                    case "jpg":
-                        encoder = new JpegEncoder();
-                        break;
-                    case "jpeg":
-                        encoder = new JpegEncoder();
-                        break;
-                    case "gif":
-                        encoder = new GifEncoder();
-                        break;
-                    default:
-                        break;
-                }
-            }
-
-            return encoder;
-        }
+    
         /// <summary>
         /// 
         /// </summary>
