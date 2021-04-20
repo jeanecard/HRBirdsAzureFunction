@@ -41,12 +41,18 @@ namespace HRFunction
                 String url = data?.FullImageUrl;
                 //2- 
                 String blobPath = CreateAndUploadThumbnail(url, log);
+                data.ThumbnailUrl = blobPath;
+                log.LogInformation($"Step 1 : " + blobPath);
                 //3-
                 string backEndPoint = Environment.GetEnvironmentVariable(ENV_UPDATE_THUMBNAIL_ENDPOINT);
                 HRUtils.NotifyPutBackend<HRSubmitPictureInputDto>(data, backEndPoint, log);
+                log.LogInformation($"Step 2: " + blobPath);
+
                 //4-
                 string userAgentsEndPoint = Environment.GetEnvironmentVariable(ENV_NEW_THUMBNAIL_SIGNALR_ENDPOINT_KEY);
                 HRUtils.NotifyPutBackend<HRSubmitPictureInputDto>(data, userAgentsEndPoint, log);
+                log.LogInformation($"Step 3 : " + blobPath);
+
 
             }
             else
@@ -94,6 +100,7 @@ namespace HRFunction
                         // 4.3-
                         var azureResponse = blobClient.Upload(output);
                         log.LogInformation("Result id version of blob: " + azureResponse.Value?.VersionId);
+                        return blobPath;
                     }
                 }
             }
