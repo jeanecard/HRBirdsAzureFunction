@@ -36,7 +36,7 @@ namespace HRFunction
                     //3- 
                     String endpoint = Environment.GetEnvironmentVariable(ENV_NEW_IMAGE_SIGNALR_ENDPOINT_KEY);
                     log.LogInformation("Endpoint : " + endpoint);
-                    HRUtils.NotifyBackend<HRSubmitPictureInputDto>(data, endpoint, log);
+                    HRUtils.NotifyPutBackend<HRSubmitPictureInputDto>(data, endpoint, log);
                     log.LogInformation("HRNewImageMetadataForUserAgents ended successfully.");
                 }
                 else
