@@ -1,10 +1,9 @@
-using System;
-using System.Text;
 using HRFunction.DuplicatedDtoWaitingForNugetSharing;
 using Microsoft.Azure.WebJobs;
-using Microsoft.Azure.WebJobs.Host;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
+using System;
+using System.Text;
 
 namespace HRFunction
 {
@@ -32,11 +31,11 @@ namespace HRFunction
                     String convertedString = Encoding.UTF8.GetString(base64EncodedBytes);
                     //2-
                     log.LogInformation($"C# Queue trigger function processed converted value: {convertedString}");
-                    HRSubmitPictureInputDto data = JsonConvert.DeserializeObject<HRSubmitPictureInputDto>(convertedString);
+                    HRSubmitPictureListItemDto data = JsonConvert.DeserializeObject<HRSubmitPictureListItemDto>(convertedString);
                     //3- 
                     String endpoint = Environment.GetEnvironmentVariable(ENV_NEW_IMAGE_SIGNALR_ENDPOINT_KEY);
                     log.LogInformation("Endpoint : " + endpoint);
-                    HRUtils.NotifyPutBackend<HRSubmitPictureInputDto>(data, endpoint, log);
+                    HRUtils.NotifyPutBackend<HRSubmitPictureListItemDto>(data, endpoint, log);
                     log.LogInformation("HRNewImageMetadataForUserAgents ended successfully.");
                 }
                 else

@@ -37,7 +37,7 @@ namespace HRFunction
                 //1 
                 var base64EncodedBytes = Convert.FromBase64String(myQueueItem);
                 String convertedString = Encoding.UTF8.GetString(base64EncodedBytes);
-                HRSubmitPictureInputDto data = JsonConvert.DeserializeObject<HRSubmitPictureInputDto>(convertedString);
+                HRSubmitPictureListItemDto data = JsonConvert.DeserializeObject<HRSubmitPictureListItemDto>(convertedString);
                 String url = data?.FullImageUrl;
                 //2- 
                 String blobPath = CreateAndUploadThumbnail(url, log);
@@ -45,12 +45,12 @@ namespace HRFunction
                 log.LogInformation($"Step 1 : " + blobPath);
                 //3-
                 string backEndPoint = Environment.GetEnvironmentVariable(ENV_UPDATE_THUMBNAIL_ENDPOINT);
-                HRUtils.NotifyPutBackend<HRSubmitPictureInputDto>(data, backEndPoint, log);
+                HRUtils.NotifyPutBackend<HRSubmitPictureListItemDto>(data, backEndPoint, log);
                 log.LogInformation($"Step 2: " + blobPath);
 
                 //4-
                 string userAgentsEndPoint = Environment.GetEnvironmentVariable(ENV_NEW_THUMBNAIL_SIGNALR_ENDPOINT_KEY);
-                HRUtils.NotifyPutBackend<HRSubmitPictureInputDto>(data, userAgentsEndPoint, log);
+                HRUtils.NotifyPutBackend<HRSubmitPictureListItemDto>(data, userAgentsEndPoint, log);
                 log.LogInformation($"Step 3 : " + blobPath);
 
 
