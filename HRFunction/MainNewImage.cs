@@ -30,7 +30,7 @@ namespace HRFunction
         /// <param name="myQueueItem"></param>
         /// <param name="log"></param>
         [FunctionName("MainNewImage")]
-        public static void Run([QueueTrigger("hr-main-new-image", Connection = "ConnectionStrings:HR_IMAGE_QUEUE_CX")] string myQueueItem, ILogger log)
+        public static void Run([QueueTrigger("hr-main-new-image", Connection = "HR_IMAGE_QUEUE_CX")] string myQueueItem, ILogger log)
         {
             if (!String.IsNullOrEmpty(myQueueItem))
             {

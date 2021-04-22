@@ -11,7 +11,7 @@ namespace HRFunction
         private static String _QUEUE_STORAGE_CONNEXION_KEY = "HR_IMAGE_QUEUE_CX";
         private static String _QUEUE_FOR_USER_AGENTS_NAME_KEY = "QUEUE_STORAGE_NEW_IMAGE_METADATA_FOR_USER_AGENTS";
         [FunctionName("MainNewImageMetaData")]
-        public static void Run([QueueTrigger("hr-main-new-image-metadata", Connection = "ConnectionStrings:HR_IMAGE_QUEUE_CX")]string myQueueItem, ILogger log)
+        public static void Run([QueueTrigger("hr-main-new-image-metadata", Connection = "HR_IMAGE_QUEUE_CX")]string myQueueItem, ILogger log)
         {
             if (!String.IsNullOrEmpty(myQueueItem))
             {
