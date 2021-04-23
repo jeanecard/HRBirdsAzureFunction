@@ -25,39 +25,56 @@ namespace HRFunction
         /// 1- Get data converted from base64
         /// 2- Create thumbnail and add it into blob storage
         /// 3- Notify SubmittedImage backend with the new thumbnail value.
-        /// 4- Notify User agents that a new humbnial s available.
+        /// 4- Notify User agents that a new humbnial s available. ConnectionStrings:HR_IMAGE_QUEUE_CX
         /// </summary>
         /// <param name="myQueueItem"></param>
         /// <param name="log"></param>
         [FunctionName("MainNewImage")]
-        public static void Run([QueueTrigger("hr-main-new-image", Connection = "HR_IMAGE_QUEUE_CX")] string myQueueItem, ILogger log)
+        public static void Run([QueueTrigger("hr-main-new-image", Connection = "ConnectionStrings:HR_IMAGE_QUEUE_CX")] string myQueueItem, ILogger log)
         {
-            if (!String.IsNullOrEmpty(myQueueItem))
+            //BONNE PRATIQUE TOUJLURS ENCADRE DE TRY CATH POUR S'Y RETROUVER DANS LES LOGS AZURE
+            try
             {
-                //1 
-                var base64EncodedBytes = Convert.FromBase64String(myQueueItem);
-                String convertedString = Encoding.UTF8.GetString(base64EncodedBytes);
-                HRSubmitPictureListItemDto data = JsonConvert.DeserializeObject<HRSubmitPictureListItemDto>(convertedString);
-                String url = data?.FullImageUrl;
-                //2- 
-                String blobPath = CreateAndUploadThumbnail(url, log);
-                data.ThumbnailUrl = blobPath;
-                log.LogInformation($"Step 1 : " + blobPath);
-                //3-
-                string backEndPoint = Environment.GetEnvironmentVariable(ENV_UPDATE_THUMBNAIL_ENDPOINT);
-                HRUtils.NotifyPutBackend<HRSubmitPictureListItemDto>(data, backEndPoint, log);
-                log.LogInformation($"Step 2: " + blobPath);
+                if (!String.IsNullOrEmpty(myQueueItem))
+                {
+                    //1 
+                    var base64EncodedBytes = Convert.FromBase64String(myQueueItem);
+                    String convertedString = Encoding.UTF8.GetString(base64EncodedBytes);
+                    HRSubmitPictureListItemDto data = JsonConvert.DeserializeObject<HRSubmitPictureListItemDto>(convertedString);
+                    String url = data?.FullImageUrl;
+                    if(!String.IsNullOrEmpty(url))
+                    {
+                        log.LogInformation($"Data received : " + convertedString);
 
-                //4-
-                string userAgentsEndPoint = Environment.GetEnvironmentVariable(ENV_NEW_THUMBNAIL_SIGNALR_ENDPOINT_KEY);
-                HRUtils.NotifyPutBackend<HRSubmitPictureListItemDto>(data, userAgentsEndPoint, log);
-                log.LogInformation($"Step 3 : " + blobPath);
+                        //2- 
+                        String blobPath = CreateAndUploadThumbnail(url, log);
 
+                        data.ThumbnailUrl = blobPath;
+                        //3-
+                        string backEndPoint = Environment.GetEnvironmentVariable(ENV_UPDATE_THUMBNAIL_ENDPOINT);
+                        HRUtils.NotifyPutBackend<HRSubmitPictureListItemDto>(data, backEndPoint, log);
+                        log.LogInformation($"Step 2: " + blobPath);
 
+                        //4-
+                        string userAgentsEndPoint = Environment.GetEnvironmentVariable(ENV_NEW_THUMBNAIL_SIGNALR_ENDPOINT_KEY);
+                        HRUtils.NotifyPutBackend<HRSubmitPictureListItemDto>(data, userAgentsEndPoint, log);
+                        log.LogInformation($"Step 3 : " + blobPath);
+                    }
+                    else
+                    {
+                        log.LogInformation($"No Fullimage URL supplied, can not process thumbnail.");
+
+                    }
+
+                }
+                else
+                {
+                    log.LogInformation($"Empty entry");
+                }
             }
-            else
+            catch (Exception ex)
             {
-                log.LogInformation($"Empty entry");
+                log.LogInformation($"HR Error !!! : " + ex.Message);
             }
         }
         /// <summary>
